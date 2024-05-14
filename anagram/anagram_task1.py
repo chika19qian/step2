@@ -38,10 +38,10 @@ def find_anagram(random_word):
     anagrams = [new_dictionary[mid][1]]
     find_left = mid - 1
     find_right = mid + 1
-    while new_dictionary[find_left][0] == sorted_dic:
+    while find_left > 0 and new_dictionary[find_left][0] == sorted_dic :
         anagrams.append(new_dictionary[find_left][1])
         find_left -= 1
-    while new_dictionary[find_right][0] == sorted_dic:
+    while find_right < len(new_dictionary)-1 and new_dictionary[find_right][0] == sorted_dic :
         anagrams.append(new_dictionary[find_right][1])
         find_right += 1
 
