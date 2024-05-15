@@ -17,28 +17,24 @@ def sort_dic():
 #count dictionary
 def count(w):
     dicti = {"original":w}
+    score = 0
     for i in w:
-        if i not in dicti:
-            if i in ['j', 'k', 'q', 'x', 'z']:
-                dicti[i] = 4
-            elif i in ['b', 'f', 'g', 'p', 'v', 'w', 'y']:
-                dicti[i] = 3
-            elif i in ['c', 'd', 'l', 'm', 'u']:
-                dicti[i] = 2
-            else:
-                dicti[i] = 1
+        if i in ['j', 'k', 'q', 'x', 'z']:
+            score += 4
+        elif i in ['b', 'f', 'g', 'p', 'v', 'w', 'y']:
+            score += 3
+        elif i in ['c', 'd', 'l', 'm', 'u']:
+            score += 2
         else:
-            if i in ['j', 'k', 'q', 'x', 'z']:
-                dicti[i] += 4
-            elif i in ['b', 'f', 'g', 'p', 'v', 'w', 'y']:
-                dicti[i] += 3
-            elif i in ['c', 'd', 'l', 'm', 'u']:
-                dicti[i] += 2
-            else:
-                dicti[i] += 1
-    dicti = sorted(dicti.items(), key=lambda x:x[0]) 
-    dic = dict(dicti)
-    return dic
+            score += 1
+        
+        if i not in dicti:
+            dicti[i] = 1
+        else:
+            dicti[i] += 1
+    dicti['scores'] = score
+
+    return dicti
 
 def count_dic():
     new_dictionary = []
@@ -47,6 +43,7 @@ def count_dic():
 
     for w in wordlist:   
         new_dictionary.append(count(w))
+    new_dictionary = sorted(new_dictionary, key=lambda x:x['scores'], reverse = True) 
     return new_dictionary
 
 
@@ -96,32 +93,44 @@ def anagram_short(random_word,new_dictionary):
 
 #when word_lenth>=13
 def anagram_long(random_word,new_dictionary):
-    result = []
     counted_word = count(random_word)
     
+    isanagram = False
     for di in new_dictionary:
-        score = 0
         for key in di:
-            if key == 'original':
+            if key == 'original' or key == 'scores':
                 continue
             elif key not in list(counted_word.keys()) or di[key] > counted_word[key]:
-                score = 0
+                isanagram = False
                 break
             else:
-                score += di[key]
-        result.append((di['original'],score))
-    result = dict(result) 
-    maxvalue = max(result.items(),key = lambda x:x[1]) 
+                isanagram = True
+        if isanagram == True:
+            result = di['original']
+            break
 
-    return maxvalue[0]
+    return result
            
 
 
 # Test
+
 #read test files
-with open("small.txt",'r') as f:
+#test_file = "small.txt"
+#test_file = "medium.txt"
+test_file = "large.txt"
+with open(test_file,'r') as f:
     random_word_list = f.read().splitlines()
 answer = []
+
+new_dictionary = count_dic()
+for w in random_word_list:
+    w = list(w)
+    answer.append(anagram_long(w,new_dictionary))
+
+with open('large_answer.txt', 'w') as f:
+    print(*answer, sep='\n',file=f)
+
 
 #if word_lenth < 13:
 '''
@@ -140,15 +149,3 @@ for w in random_word_list:
 with open('small_answer.txt', 'w') as f:
     print(*answer, sep='\n',file=f)
 '''
-#medium
-with open("medium.txt",'r') as f:
-    random_word_list = f.read().splitlines()
-answer = []
-
-new_dictionary = count_dic()
-for w in random_word_list:
-    w = list(w)
-    answer.append(anagram_long(w,new_dictionary))
-
-with open('medium_answer.txt', 'w') as f:
-    print(*answer, sep='\n',file=f)
