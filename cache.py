@@ -1,4 +1,5 @@
 import sys
+from hash_table import HashTable
 
 # Implement a data structure that stores the most recently accessed N pages.
 # See the below test cases to see how it should work.
@@ -10,28 +11,35 @@ class Cache:
     # Initialize the cache.
     # |n|: The size of the cache.
     def __init__(self, n):
-        #------------------------#
-        # Write your code here!  #
-        #------------------------#
-        pass
+        self.n = n
+        self.page = HashTable()
+        self.hashlist = []
 
     # Access a page and update the cache so that it stores the most recently
     # accessed N pages. This needs to be done with mostly O(1).
     # |url|: The accessed URL
     # |contents|: The contents of the URL
     def access_page(self, url, contents):
-        #------------------------#
-        # Write your code here!  #
-        #------------------------#
-        pass
+        if url in self.hashlist:
+            self.hashlist.remove(url)
+            self.hashlist.insert(0,url)
+        elif self.page.item_count < self.n:
+            self.hashlist.insert(0,url)
+            self.page.put(url,contents)
+            self.hashlist
+        else:   
+            self.page.delete(self.hashlist[-1])
+            self.hashlist.pop()
+            self.hashlist.insert(0,url)
+            self.page.put(url,contents)
+            
 
     # Return the URLs stored in the cache. The URLs are ordered in the order
     # in which the URLs are mostly recently accessed.
     def get_pages(self):
-        #------------------------#
-        # Write your code here!  #
-        #------------------------#
-        pass
+        return self.hashlist
+
+
 
 
 def cache_test():
