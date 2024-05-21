@@ -72,6 +72,7 @@ class HashTable:
         new_item = Item(key, value, self.buckets[bucket_index])
         self.buckets[bucket_index] = new_item
         self.item_count += 1
+        self.rehash_size()
         return True
 
     # Get an item from the hash table.
@@ -108,6 +109,7 @@ class HashTable:
                 else:
                     prev.next = item.next
                 self.item_count -= 1
+                self.rehash_size()
                 return True
             prev = item
             item = item.next
@@ -116,6 +118,41 @@ class HashTable:
     # Return the total number of items in the hash table.
     def size(self):
         return self.item_count
+   
+    def rehash_size(self):
+        if self.item_count > self.bucket_size * 0.7:
+            new_bucket_size = self.bucket_size * 2 + 1
+            # print(new_bucket_size)
+            self.rehash(new_bucket_size)
+        elif self.item_count < self.bucket_size * 0.3 and self.bucket_size > 10:
+            new_bucket_size = self.bucket_size // 2
+            if new_bucket_size % 2 == 0:
+                new_bucket_size += 1
+            # print(new_bucket_size)
+            self.rehash(new_bucket_size)
+        else:
+            pass
+        return
+
+
+
+    def rehash(self, new_bucket_size):
+        old_buckets = self.buckets
+        self.buckets = [None] * new_bucket_size
+        self.bucket_size = new_bucket_size
+
+        for i in old_buckets:
+
+            if i is not None:
+                
+                bucket_new_index = calculate_hash(i.key) % self.bucket_size   
+                new_item = Item(i.key, i.value, i.next)
+                print("new item",new_item)   
+                self.buckets[bucket_new_index] = new_item
+
+        return self
+
+
 
     # Check that the hash table has a "reasonable" bucket size.
     # The bucket size is judged "reasonable" if it is smaller than 100 or
