@@ -9,6 +9,32 @@ import random, sys, time
 #                                                                         #
 ###########################################################################
 
+
+# get prime list
+with open('prime_list.txt','r') as f:
+    prime_list = [int(line.strip()) for line in f]
+
+# just pass this part. 
+def nearest_prime_number(num):
+    le = 0
+    ri = len(prime_list)-1
+    if num < prime_list[0]:
+        return prime_list[0]
+    if num > prime_list[ri]:
+        raise ValueError("bigger than the biggest in the list")
+    while le < ri:
+        mid = (le + ri)//2
+        if num == prime_list[mid]:
+            return prime_list[mid]
+        elif num < prime_list[ri] and num > prime_list[ri-1]:
+            return prime_list[ri]
+        elif num < prime_list[le + 1] and num > prime_list[le]:
+            return prime_list[le + 1]
+        elif num < prime_list[mid]:
+            ri = mid
+        else:
+            le = mid
+    
 # Hash function.
 #
 # |key|: string
@@ -19,7 +45,7 @@ def calculate_hash(key):
     # Note: This is not a good hash function. Do you see why? - too many conflicts(anagrams)
     hash = 0
     for i in range(len(key)):
-        hash += (i*2+1)*ord(key[i])
+        hash += prime_list[i] *ord(key[i])
     return hash
 
 
