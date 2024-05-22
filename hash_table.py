@@ -13,12 +13,13 @@ import random, sys, time
 #
 # |key|: string
 # Return value: a hash value
+
 def calculate_hash(key):
     assert type(key) == str
-    # Note: This is not a good hash function. Do you see why?
+    # Note: This is not a good hash function. Do you see why? - too many conflicts(anagrams)
     hash = 0
-    for i in key:
-        hash += ord(i)
+    for i in range(len(key)):
+        hash += (i*2+1)*ord(key[i])
     return hash
 
 
@@ -147,7 +148,7 @@ class HashTable:
                 
                 bucket_new_index = calculate_hash(i.key) % self.bucket_size   
                 new_item = Item(i.key, i.value, i.next)
-                print("new item",new_item)   
+                #print("new item",new_item)   
                 self.buckets[bucket_new_index] = new_item
 
         return self
