@@ -170,12 +170,13 @@ class HashTable:
 
         for i in old_buckets:
 
-            if i is not None:
+            while i is not None:
                 
                 bucket_new_index = calculate_hash(i.key) % self.bucket_size   
-                new_item = Item(i.key, i.value, i.next)
+                new_item = Item(i.key, i.value, self.buckets[bucket_new_index])
                 #print("new item",new_item)   
                 self.buckets[bucket_new_index] = new_item
+                i = i.next
 
         return self
 
