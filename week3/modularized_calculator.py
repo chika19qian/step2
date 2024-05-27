@@ -26,6 +26,16 @@ def read_minus(line, index):
     return token, index + 1
 
 
+def read_multiplication(line, index):
+    token = {'type': 'MULTIPLICATION'}
+    return token, index + 1
+
+
+def read_division(line, index):
+    token = {'type': 'DIVISION'}
+    return token, index + 1
+
+
 def tokenize(line):
     tokens = []
     index = 0
@@ -36,6 +46,10 @@ def tokenize(line):
             (token, index) = read_plus(line, index)
         elif line[index] == '-':
             (token, index) = read_minus(line, index)
+        elif line[index] == '*':
+            (token, index) = read_multiplication(line, index)
+        elif line[index] == '/':
+            (token, index) = read_division(line, index)
         else:
             print('Invalid character found: ' + line[index])
             exit(1)
@@ -43,7 +57,29 @@ def tokenize(line):
     return tokens
 
 
+# Prioritize solving the higher-level operations
+def prioritize_mul_div(tokens):
+    new_tokens = []
+    tokens.insert(0, {'type': 'PLUS'}) # Insert a dummy '+' token
+    index = 1
+    while index < len(tokens):
+        if tokens[index]['type'] == 'MULTIPLICATION' or tokens[index]['type'] == 'DIVISION':
+            prev_number = new_tokens.pop()
+            current_number = tokens[index + 1]['number']
+            if tokens[index]['type'] == 'MULTIPLICATION':
+                new_number = prev_number['number'] * current_number
+            elif tokens[index]['type'] == 'DIVISION':
+                new_number = prev_number['number'] / current_number
+            new_tokens.append({'type': 'NUMBER', 'number': new_number})
+            index += 2
+        else:
+            new_tokens.append(tokens[index])
+            index += 1
+    return new_tokens
+                
+
 def evaluate(tokens):
+    tokens = prioritize_mul_div(tokens)
     answer = 0
     tokens.insert(0, {'type': 'PLUS'}) # Insert a dummy '+' token
     index = 1
@@ -75,6 +111,8 @@ def run_test():
     print("==== Test started! ====")
     test("1+2")
     test("1.0+2.1-3")
+    test("1+2*4-10/5*2")
+    test("3*3/4+2-1/2")
     print("==== Test finished! ====\n")
 
 run_test()
