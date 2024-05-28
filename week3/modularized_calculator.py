@@ -16,6 +16,21 @@ def read_number(line, index):
     return token, index
 
 
+def read_alphabet(line, index):
+    alpha = []
+    while index < len(line) and line[index].isalpha():
+        alpha.append(line[index])
+        index += 1
+    alpha = ''.join(alpha)
+    if alpha == 'abs':
+        token = {'type': 'ABS'}
+    elif alpha == 'int':
+        token = {'type': 'INT'}
+    elif alpha == 'round':
+        token = {'type': 'ROUND'}
+    return token, index
+
+
 def read_plus(line, index):
     token = {'type': 'PLUS'}
     return token, index + 1
@@ -52,6 +67,8 @@ def tokenize(line):
     while index < len(line):
         if line[index].isdigit():
             (token, index) = read_number(line, index)
+        elif line[index].isalpha():
+            (token, index) = read_alphabet(line, index)
         elif line[index] == '+':
             (token, index) = read_plus(line, index)
         elif line[index] == '-':
@@ -71,12 +88,55 @@ def tokenize(line):
     return tokens
 
 
+# Handle abs,int and round
+def clear_commands(tokens, new_tokens, index):
+    # For abs
+    if tokens[index]['type'] == 'ABS':
+        # If the number in abs is positive
+        if tokens[index + 2]['type'] == 'NUMBER':
+            for i in range(index, index + 3):
+                new_tokens.pop() # pop: abs("original number")
+            abs_number = abs(tokens[index + 2]['number'])
+            new_tokens.append({'type': 'NUMBER', 'number': abs_number}) # append the result
+        # If the number in abs is negative
+        elif tokens[index + 2]['type'] == 'MINUS' and tokens[index + 3]['type'] == 'NUMBER':
+            for i in range(index, index + 4):
+                new_tokens.pop()
+            abs_number = tokens[index + 3]['number']
+            new_tokens.append({'type': 'NUMBER', 'number': abs_number})
+        else:
+            print('Command Error')
+            exit(1)
+    # For int        
+    elif tokens[index]['type'] == 'INT':
+        if tokens[index + 2]['type'] == 'NUMBER':
+            for i in range(index, index + 3):
+                new_tokens.pop()
+            int_number = int(tokens[index + 2]['number'])
+            new_tokens.append({'type': 'NUMBER', 'number': int_number})
+        else:
+            print('Command Error')
+            exit(1)
+    # For round
+    elif tokens[index]['type'] == 'ROUND':
+        if tokens[index + 2]['type'] == 'NUMBER':
+            for i in range(index, index + 3):
+                new_tokens.pop()
+            if tokens[index + 2]['number'] - int(tokens[index + 2]['number']) > 0.5:
+                round_number = int(tokens[index + 2]['number']) + 1
+            else:
+                round_number = int(tokens[index + 2]['number'])
+            new_tokens.append({'type': 'NUMBER', 'number': round_number})
+        else:
+            print('Command Error')
+            exit(1)
+    return new_tokens
+
 # Find out parentheses
 def find_parentheses(tokens):
     while {'type': 'L_PARENTHESIS'} in tokens or  {'type': 'R_PARENTHESIS'} in tokens:
-         #print("递归前",tokens,'\n')
-         tokens = find_parentheses_rec(tokens)
-         #print("递归后",tokens)
+        # If there are still () in tokens, use recursion to reduce them.
+        tokens = find_parentheses_rec(tokens)
     return tokens
 
 
@@ -87,29 +147,32 @@ def find_parentheses_rec(tokens):
     parentheses_list = []
     index = 1
     while index < len(tokens):
-        calculate_tokens = []
+        calculate_tokens = [] # To calculate the contents between ()
         if tokens[index]['type'] == 'L_PARENTHESIS':
             parentheses_list.append(index)
             new_tokens.append(tokens[index])
 
         elif tokens[index]['type'] == 'R_PARENTHESIS':
-
-            # Check if only ")"
+            # Check if only ")", exit
             if not parentheses_list:
                 print('Invalid syntax,"()"')
-                return
+                exit(1)
             parentheses_list.append(index)
+            # Check if it's the innermost ()
             if tokens[parentheses_list[-2]]['type'] == 'L_PARENTHESIS':
-                new_tokens.pop()
-                start = parentheses_list[-2]
-                #1print("start",start,index)
-
-                for i in range(start + 1, index):
-                    calculate_tokens.append(tokens[i])
+                # Check if it's a command like abs
+                if index - parentheses_list[-2] <= 3:
+                    new_index = parentheses_list[-2] - 1
+                    new_tokens = clear_commands(tokens, new_tokens, new_index)
+                # If it's a normal ), but not a command
+                else:
                     new_tokens.pop()
-                calculated_num = evaluate_without_parenthesis(calculate_tokens)
-                new_tokens.append({'type': 'NUMBER', 'number': calculated_num})
-            #print("右括号发现",parentheses_list, new_tokens, "\n","值calculated_num",calculated_num)
+                    start = parentheses_list[-2] # the index of the left parenthesis
+                    for i in range(start + 1, index): # calculate the formula between ()
+                        calculate_tokens.append(tokens[i])
+                        new_tokens.pop() # pop out the formula
+                    calculated_num = evaluate_without_parenthesis(calculate_tokens)
+                    new_tokens.append({'type': 'NUMBER', 'number': calculated_num}) # append the result of the formula
             else:
                 new_tokens.append(tokens[index])
         else:
@@ -126,8 +189,8 @@ def prioritize_mul_div(tokens):
     while index < len(tokens):
         # If found * or /
         if tokens[index]['type'] == 'MULTIPLICATION' or tokens[index]['type'] == 'DIVISION':
-            prev_number = new_tokens.pop()
-            current_number = tokens[index + 1]['number']
+            prev_number = new_tokens.pop() # pop the number before * or / and save it as prev_number
+            current_number = tokens[index + 1]['number'] # the number after * or /
             if tokens[index]['type'] == 'MULTIPLICATION':
                 new_number = prev_number['number'] * current_number
             elif tokens[index]['type'] == 'DIVISION':
@@ -179,7 +242,7 @@ def run_test():
     print("==== Test started! ====")
 
     # Only plus and minus
-    test("1+2")
+    '''test("1+2")
     test("1.0+2.1-3")
     # Mulplication and Devision
     test("2*3/4")
@@ -193,13 +256,14 @@ def run_test():
     test("2.5*3+(6/2)-4.2")
     test("(3.5+2.1)*4-((2-1)*5)") 
     test("3+(4*(5+6)*3)-1")
-    test("2.5*3+(6/2)-4.2")
-    test("(3.5+2.1)*4-((2-1)*5)")
-    test("(1+2)*(3+4)/5")
-    test("(2+3)*(5.5-1.5)/(2*3)")
-    test("((2.5+3.5)*2-1)/3")
-    test("2.5*(4+(3-2))/1.5")
-    test("6/(2*(1+2))-3.5")
+    test("2.5*3+(6/2)-4.2")'''
+    # ABS, INT and ROUND
+    test('3+abs(2)')
+    test('3+abs(-5)')
+    test('(12.8+(abs(-6)*2+7-abs(2))-32.4)/2')
+    test('1+int(3.8)')
+    test('1+round(3.8)')
+    test('1+round(3.8)-int(2.3)+abs(-5.6)*2-(5+int(0.68))')
 
     print("==== Test finished! ====\n")
 
