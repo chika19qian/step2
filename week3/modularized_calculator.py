@@ -136,12 +136,12 @@ def clear_commands(tokens, new_tokens, index):
 def find_parentheses(tokens):
     while {'type': 'L_PARENTHESIS'} in tokens or  {'type': 'R_PARENTHESIS'} in tokens:
         # If there are still () in tokens, use recursion to reduce them.
-        tokens = find_parentheses_rec(tokens)
+        tokens = find_parentheses_iter(tokens)
     return tokens
 
 
-# Recursion to find the innermost "()"
-def find_parentheses_rec(tokens):
+# Iterate to find the innermost "()"
+def find_parentheses_iter(tokens):
     tokens.insert(0, {'type': 'PLUS'}) # Insert a dummy '+' token
     new_tokens = []
     parentheses_list = []
