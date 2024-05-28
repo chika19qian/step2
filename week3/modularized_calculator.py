@@ -242,7 +242,7 @@ def run_test():
     print("==== Test started! ====")
 
     # Only plus and minus
-    '''test("1+2")
+    test("1+2")
     test("1.0+2.1-3")
     # Mulplication and Devision
     test("2*3/4")
@@ -256,7 +256,7 @@ def run_test():
     test("2.5*3+(6/2)-4.2")
     test("(3.5+2.1)*4-((2-1)*5)") 
     test("3+(4*(5+6)*3)-1")
-    test("2.5*3+(6/2)-4.2")'''
+    test("2.5*3+(6/2)-4.2")
     # ABS, INT and ROUND
     test('3+abs(2)')
     test('3+abs(-5)')
