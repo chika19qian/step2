@@ -1,5 +1,29 @@
 #! /usr/bin/python3
 
+
+'''
+
+    This is the read part. 
+    Use it to read string.
+
+    read_xxx(line, index) -> (token, index)
+
+    function: A cluster of functions to read line and convert them to corresponded types.
+
+    xxx := [number(int), alphabet(char), operators(+, -, *, /), symbol('(', ')')]
+
+    Args:
+        line: input string.
+        index: the index of the input string, which used to specify char in current position
+
+    Returns:
+        token: a dictionary to indicate parsed types. i.e, {'type': xxx }
+        index: the index of the input string, which used to specify char for next read function.
+
+    
+'''
+
+
 def read_number(line, index):
     number = 0
     while index < len(line) and line[index].isdigit():
@@ -88,104 +112,71 @@ def tokenize(line):
     return tokens
 
 
-# Handle abs,int and round
-def clear_commands(tokens, new_tokens, index):
-    # For abs
-    if tokens[index]['type'] == 'ABS':
-        # If the number in abs is positive
-        if tokens[index + 2]['type'] == 'NUMBER':
-            for i in range(index, index + 3):
-                new_tokens.pop() # pop: abs("original number")
-            abs_number = abs(tokens[index + 2]['number'])
-            new_tokens.append({'type': 'NUMBER', 'number': abs_number}) # append the result
-        # If the number in abs is negative
-        elif tokens[index + 2]['type'] == 'MINUS' and tokens[index + 3]['type'] == 'NUMBER':
-            for i in range(index, index + 4):
-                new_tokens.pop()
-            abs_number = tokens[index + 3]['number']
-            new_tokens.append({'type': 'NUMBER', 'number': abs_number})
-        else:
-            print('Command Error')
-            exit(1)
-    # For int        
-    elif tokens[index]['type'] == 'INT':
-        if tokens[index + 2]['type'] == 'NUMBER':
-            for i in range(index, index + 3):
-                new_tokens.pop()
-            int_number = int(tokens[index + 2]['number'])
-            new_tokens.append({'type': 'NUMBER', 'number': int_number})
-        else:
-            print('Command Error')
-            exit(1)
-    # For round
-    elif tokens[index]['type'] == 'ROUND':
-        if tokens[index + 2]['type'] == 'NUMBER':
-            for i in range(index, index + 3):
-                new_tokens.pop()
-            if tokens[index + 2]['number'] - int(tokens[index + 2]['number']) > 0.5:
-                round_number = int(tokens[index + 2]['number']) + 1
-            else:
-                round_number = int(tokens[index + 2]['number'])
-            new_tokens.append({'type': 'NUMBER', 'number': round_number})
-        else:
-            print('Command Error')
-            exit(1)
-    return new_tokens
+'''
+    This is the real working parts for calculation
 
-# Find out parentheses
-def find_parentheses(tokens):
-    while {'type': 'L_PARENTHESIS'} in tokens or  {'type': 'R_PARENTHESIS'} in tokens:
-        # If there are still () in tokens, use recursion to reduce them.
-        tokens = find_parentheses_iter(tokens)
-    return tokens
+    evaluate_xxx(tokens) -> (new_tokens)
+    except for: evaluate_plus_and_divide(tokens) -> (answer)
+
+    function: Each function calculates different symbols and functionalities respectively.
+
+    Args:
+        tokens: A list of tokens representing the arithmetic expression.
+
+    Returns:
+        A list of tokens with all parentheses evaluated and removed.
+    '''
 
 
-# Iterate to find the innermost "()"
-def find_parentheses_iter(tokens):
-    tokens.insert(0, {'type': 'PLUS'}) # Insert a dummy '+' token
+def evaluate_brackets(tokens):
+    #This function finds the innermost parentheses, evaluates the expression within them, and replaces the parentheses and their content with the evaluated result.
+    while True:
+        R = -1
+        for i in range(len(tokens)):
+            if tokens[i]['type'] == 'R_PARENTHESIS':
+                R = i
+                break
+        if R == -1:
+            return tokens
+        
+        L = -1
+        for j in range(R, -1, -1):
+            if tokens[j]['type'] == 'L_PARENTHESIS':
+                L = j
+                break
+        if L == -1:
+            raise ValueError("Mismatched parentheses in expression")
+        
+        new_number = evaluate(tokens[L + 1: R])
+        new_tokens = tokens[:L] + [{'type': 'NUMBER', 'number': new_number}] + tokens[R + 1:]
+        tokens = new_tokens
+
+
+def evaluate_functions(tokens):
+    # This function evaluates specific functions (absolute value, integer conversion, and rounding) within the tokens.
+    index = 0
     new_tokens = []
-    parentheses_list = []
-    index = 1
     while index < len(tokens):
-        calculate_tokens = [] # To calculate the contents between ()
-        if tokens[index]['type'] == 'L_PARENTHESIS':
-            parentheses_list.append(index)
-            new_tokens.append(tokens[index])
-
-        elif tokens[index]['type'] == 'R_PARENTHESIS':
-            # Check if only ")", exit
-            if not parentheses_list:
-                print('Invalid syntax,"()"')
-                exit(1)
-            parentheses_list.append(index)
-            # Check if it's the innermost ()
-            if tokens[parentheses_list[-2]]['type'] == 'L_PARENTHESIS':
-                # Check if it's a command like abs
-                if index - parentheses_list[-2] <= 3:
-                    new_index = parentheses_list[-2] - 1
-                    new_tokens = clear_commands(tokens, new_tokens, new_index)
-                # If it's a normal ), but not a command
-                else:
-                    new_tokens.pop()
-                    start = parentheses_list[-2] # the index of the left parenthesis
-                    for i in range(start + 1, index): # calculate the formula between ()
-                        calculate_tokens.append(tokens[i])
-                        new_tokens.pop() # pop out the formula
-                    calculated_num = evaluate_without_parenthesis(calculate_tokens)
-                    new_tokens.append({'type': 'NUMBER', 'number': calculated_num}) # append the result of the formula
-            else:
-                new_tokens.append(tokens[index])
-        else:
-            new_tokens.append(tokens[index])
+        if tokens[index]['type'] == 'NUMBER':
+            if tokens[index - 1]['type'] == 'ABS':
+                new_tokens.pop()
+                tokens[index]['number'] = abs(tokens[index]['number'])
+            elif tokens[index - 1]['type'] == 'INT':
+                new_tokens.pop()
+                tokens[index]['number'] = int(tokens[index]['number'])
+            elif tokens[index - 1]['type'] == 'ROUND':
+                new_tokens.pop()
+                tokens[index]['number'] = round(tokens[index]['number'])
+        new_tokens.append(tokens[index])
         index += 1
     return new_tokens
 
 
-# Prioritize solving the higher-level operations
-def prioritize_mul_div(tokens):
+def evaluate_multiply_and_division(tokens):
+    # This function evaluates multiplication and division within the tokens.
     new_tokens = []
-    tokens.insert(0, {'type': 'PLUS'}) # Insert a dummy '+' token
-    index = 1
+    new_tokens = []
+    index = 0
     while index < len(tokens):
         # If found * or /
         if tokens[index]['type'] == 'MULTIPLICATION' or tokens[index]['type'] == 'DIVISION':
@@ -203,8 +194,8 @@ def prioritize_mul_div(tokens):
     return new_tokens
                 
 
-def evaluate_without_parenthesis(tokens):
-    tokens = prioritize_mul_div(tokens)
+def evaluate_plus_and_divide(tokens):
+    # This function evaluates addition and subtraction within the tokens.
     answer = 0
     tokens.insert(0, {'type': 'PLUS'}) # Insert a dummy '+' token
     index = 1
@@ -215,16 +206,35 @@ def evaluate_without_parenthesis(tokens):
             elif tokens[index - 1]['type'] == 'MINUS':
                 answer -= tokens[index]['number']
             else:
-                #print(index,tokens[index],'Invalid syntax')
+                print(index,tokens[index],'Invalid syntax')
                 exit(1)
         index += 1
     return answer
 
 
+'''
+
+    This is the general calculate part. 
+    evaluate(tokens) -> (answer)
+    
+'''
+
+
 def evaluate(tokens):
-    new_tokens = find_parentheses(tokens)
-    answer = evaluate_without_parenthesis(new_tokens)
+
+    # Firstly solve the parenthesis
+    tokens = evaluate_brackets(tokens)#inner bracket range
+    tokens = evaluate_functions(tokens)
+    # solve the mul and div
+    tokens = evaluate_multiply_and_division(tokens)
+    # Finally calculate the add ans sub
+    answer  = evaluate_plus_and_divide(tokens)
     return answer
+
+
+'''
+    This is the test part.
+'''
 
 
 def test(line):
@@ -241,29 +251,35 @@ def test(line):
 def run_test():
     print("==== Test started! ====")
 
-    # Only plus and minus
+    print("\n","== Only plus and minus tests start ==")
+    test("12")
+    test("-1.4")
     test("1+2")
-    test("1.0+2.1-3")
-    # Mulplication and Devision
+    test("1.0+2.1-5")
+
+    print("\n","== Mulplication and Devision tests start ==")
     test("2*3/4")
     test("2.2*3.4/4.5")
     test("1+2*4-10/5*2")
     test("3*3/4.3+2-1/2")
-    # Parenthesis()
+
+    print("\n","== Parenthesis() tests start ==")
+    test("1+(-2)")
     test("(3.0+4*(2-1))/5")
-    test("((3.0+4)*(2-1))/5")
+    test("((3.0+4)*(1-3))/5")
     test("3+(4*(5+6)*3)-1")
     test("2.5*3+(6/2)-4.2")
     test("(3.5+2.1)*4-((2-1)*5)") 
     test("3+(4*(5+6)*3)-1")
     test("2.5*3+(6/2)-4.2")
-    # ABS, INT and ROUND
+
+    print("\n","== Function(abs, int and round) tests start ==")
     test('3+abs(2)')
     test('3+abs(-5)')
     test('(12.8+(abs(-6)*2+7-abs(2))-32.4)/2')
-    test('1+int(3.8)')
-    test('1+round(3.8)')
-    test('1+round(3.8)-int(2.3)+abs(-5.6)*2-(5+int(0.68))')
+    test('1+int(3.8+2)')
+    test('1+round(3.8-1)')
+    test('1+abs(round(-3.8))-int(2.3)+int(abs(-5.6)*2)-(5+int(0.68))')
 
     print("==== Test finished! ====\n")
 
