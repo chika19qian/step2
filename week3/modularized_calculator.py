@@ -194,7 +194,7 @@ def evaluate_multiply_and_division(tokens):
     return new_tokens
                 
 
-def evaluate_plus_and_divide(tokens):
+def evaluate_plus_and_minus(tokens):
     # This function evaluates addition and subtraction within the tokens.
     answer = 0
     tokens.insert(0, {'type': 'PLUS'}) # Insert a dummy '+' token
@@ -228,7 +228,7 @@ def evaluate(tokens):
     # solve the mul and div
     tokens = evaluate_multiply_and_division(tokens)
     # Finally calculate the add ans sub
-    answer  = evaluate_plus_and_divide(tokens)
+    answer  = evaluate_plus_and_minus(tokens)
     return answer
 
 
