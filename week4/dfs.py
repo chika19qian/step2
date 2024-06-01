@@ -86,9 +86,20 @@ def dfs_with_stack_in_the_recursion_order(start, goal):
     visited = {}
     previous = {}
 
-    #------------------------#
-    # Write your code here!  #
-    #------------------------#
+    stack.append(start)
+    visited[start] = True
+    previous[start] = None
+    while len(stack):
+        node = stack.pop()
+        visited[node] = True
+        if node == goal:
+            break
+        links[node].reverse()
+        for child in links[node]:
+            if not child in visited:
+                stack.append(child)
+                
+                previous[child] = node
 
     if goal in previous:
         print(" -> ".join(find_path(goal, previous)))
