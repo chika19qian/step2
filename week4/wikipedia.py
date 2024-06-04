@@ -75,18 +75,77 @@ class Wikipedia:
     # |start|: The title of the start page.
     # |goal|: The title of the goal page.
     def find_shortest_path(self, start, goal):
-        #------------------------#
-        # Write your code here!  #
-        #------------------------#
-        pass
+        q = collections.deque()
+        visited = {}
+        # find the ID of start and visit all the items
+        start_id = [k for k, v in self.titles.items() if v == start][0]
+        q.append(start_id)
+        visited[start_id] = start_id
+        while q:
+            node = q.popleft()
+            for child in self.links[node]:
+                if child not in visited:
+                    visited[child] = node
+                    q.append(child)
+        # find the path
+        path_num = []
+        path = []
+        goal_id = [k for k, v in self.titles.items() if v == goal][0]
+        node = goal_id
+        while not node == start_id:
+            path_num.append(node)
+            node = visited[node]
+        path_num.append(start_id)
+        path_num.reverse()
+        for i in path_num:
+            path.append(self.titles[i])
+        print("The shortest path from %s to %s is:" % (start, goal))
+        print(path)
 
 
     # Calculate the page ranks and print the most popular pages.
     def find_most_popular_pages(self):
-        #------------------------#
-        # Write your code here!  #
-        #------------------------#
-        pass
+        # set the initial page rank
+        original_page_rank = {}
+        new_initial_page_rank = {}
+        for id in self.titles.keys():
+            original_page_rank[id] = 1.0
+            new_initial_page_rank[id] = 0
+        # random surfer model
+        converged = False
+        a = 0
+        while not converged:
+            new_page_rank = new_initial_page_rank.copy()
+            for child_id, child_link in self.links.items():
+                if len(child_link) == 0:
+                    give_neighbor = 0.85 * original_page_rank[child_id]
+                else:
+                    give_neighbor = 0.85 * original_page_rank[child_id] / len(child_link)
+                give_all = 0.15 * original_page_rank[child_id] / len(original_page_rank)
+
+                for neighbor in child_link:
+                    new_page_rank[neighbor] += give_neighbor
+                for i in new_page_rank.keys():
+                    new_page_rank[i] += give_all
+            for i in new_page_rank: 
+                if abs(original_page_rank[i] - new_page_rank[i]) <= 0.01:
+                    converged = True
+                else:
+                    converged = False
+                    break
+            original_page_rank = new_page_rank
+            a += 1
+            
+        page_rank = sorted(original_page_rank.items(), reverse=True, key=lambda x: x[1])
+        if len(page_rank) > 10:
+            for i in 10:
+                print(page_rank)
+        else:
+            print(page_rank)
+        count = 0
+        for i in page_rank:
+            count += i[1]
+        print(count, a)
 
 
     # Do something more interesting!!
@@ -103,7 +162,8 @@ if __name__ == "__main__":
         exit(1)
 
     wikipedia = Wikipedia(sys.argv[1], sys.argv[2])
-    wikipedia.find_longest_titles()
-    wikipedia.find_most_linked_pages()
-    wikipedia.find_shortest_path("渋谷", "パレートの法則")
+    #wikipedia.find_longest_titles()
+    #wikipedia.find_most_linked_pages()
+    #wikipedia.find_shortest_path("A", "F")
+    #wikipedia.find_shortest_path("渋谷", "パレートの法則")
     wikipedia.find_most_popular_pages()

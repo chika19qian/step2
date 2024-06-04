@@ -31,23 +31,23 @@ class Wikipedia:
         print(id_max)
         THRESHOLD = id_max / 4
 
-        with open("pages_large.txt", mode="w") as file:
+        with open("wikipedia_dataset/pages_large.txt", mode="w") as file:
             for id in sorted(self.titles.keys()):
                 file.write("%d %s\n" % (id, self.titles[id]))
 
-        with open("links_large.txt", mode="w") as file:
+        with open("wikipedia_dataset/links_large.txt", mode="w") as file:
             for id in sorted(self.titles.keys()):
                 if id in self.links:
                     for dst in sorted(self.links[id]):
                         if dst in self.titles:
                             file.write("%d %d\n" % (id, dst))
 
-        with open("pages_medium.txt", mode="w") as file:
+        with open("wikipedia_dataset/pages_medium.txt", mode="w") as file:
             for id in sorted(self.titles.keys()):
                 if id < THRESHOLD:
                     file.write("%d %s\n" % (id, self.titles[id]))
 
-        with open("links_medium.txt", mode="w") as file:
+        with open("wikipedia_dataset/links_medium.txt", mode="w") as file:
             for id in sorted(self.titles.keys()):
                 if id < THRESHOLD and id in self.links:
                     for dst in sorted(self.links[id]):
