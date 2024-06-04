@@ -1,5 +1,6 @@
-import sys
+import sys, time
 import collections
+
 
 class Wikipedia:
 
@@ -106,35 +107,42 @@ class Wikipedia:
     # Calculate the page ranks and print the most popular pages.
     def find_most_popular_pages(self):
         # set the initial page rank
-        original_page_rank = {}
-        new_initial_page_rank = {}
-        for id in self.titles.keys():
-            original_page_rank[id] = 1.0
-            new_initial_page_rank[id] = 0
-        # random surfer model
+        initial_value = 1
+        original_page_rank = {key: initial_value for key in self.titles.keys()}
+        reset_value = 0
+        new_initial_page_rank = {key: reset_value for key in self.titles.keys()}
+        #print(original_page_rank)
+        #print(new_initial_page_rank)
+        # iterate until convergency
         converged = False
-        a = 0
+        a = 0 # count the number of iterations
         while not converged:
+            begin = time.time()
+            give_all = 0
             new_page_rank = new_initial_page_rank.copy()
             for child_id, child_link in self.links.items():
+                # random surfer model
                 if len(child_link) == 0:
                     give_neighbor = 0.85 * original_page_rank[child_id]
                 else:
                     give_neighbor = 0.85 * original_page_rank[child_id] / len(child_link)
-                give_all = 0.15 * original_page_rank[child_id] / len(original_page_rank)
-
+                give_all += 0.15 * original_page_rank[child_id] / len(original_page_rank)
                 for neighbor in child_link:
                     new_page_rank[neighbor] += give_neighbor
-                for i in new_page_rank.keys():
-                    new_page_rank[i] += give_all
+            for i in new_page_rank.keys():
+                new_page_rank[i] += give_all
+            # check if converged
             for i in new_page_rank: 
-                if abs(original_page_rank[i] - new_page_rank[i]) <= 0.01:
+                if abs(original_page_rank[i] - new_page_rank[i]) <= 0.05:
                     converged = True
                 else:
+                    print("old",original_page_rank[i],"new", new_page_rank[i],"abs",abs(original_page_rank[i] - new_page_rank[i]))
                     converged = False
                     break
             original_page_rank = new_page_rank
             a += 1
+            end = time.time()
+            print("%d %.6f" % (a, end - begin))
             
         page_rank = sorted(original_page_rank.items(), reverse=True, key=lambda x: x[1])
         if len(page_rank) > 10:
@@ -142,6 +150,7 @@ class Wikipedia:
                 print(page_rank)
         else:
             print(page_rank)
+        # check if the sum of the page rank is the same
         count = 0
         for i in page_rank:
             count += i[1]
