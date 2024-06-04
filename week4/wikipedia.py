@@ -154,11 +154,8 @@ class Wikipedia:
         page_rank = np.sort(original_page_rank)[::-1]
         
         if len(page_rank) > 10:
-            for i in range(10):
-                page_id = page_rank.index[i]
-                print(page_id)
-        else:
-            print(page_rank)
+            page_rank = page_rank[:10]
+        print(page_rank)
 
         # check if the sum of the page rank is the same
         total_rank = original_page_rank.sum()
