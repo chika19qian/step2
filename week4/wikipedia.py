@@ -112,18 +112,18 @@ class Wikipedia:
         num_pages = len(self.titles)
         original_page_rank = np.ones(num_pages)
         new_initial_page_rank = np.zeros(num_pages)
-        print("初始值",original_page_rank, new_initial_page_rank)
+        #print("初始值",original_page_rank, new_initial_page_rank)
 
         # count the sum of the initial page rank
         initial_sum = original_page_rank.sum()
-        print("Initial PageRank sum: %f" % (initial_sum))
+        #print("Initial PageRank sum: %f" % (initial_sum))
 
         # add ID as the index of the numpy array
         id_list = list(self.titles.keys())
         original_page_rank = Series(original_page_rank, index = id_list)
-        print("加入id后ori",original_page_rank)
+        #print("加入id后ori",original_page_rank)
         new_initial_page_rank = Series(new_initial_page_rank, index = id_list)
-        print("加入id后new",new_initial_page_rank)
+        #print("加入id后new",new_initial_page_rank)
 
         # iterate until converged
         converged = False
@@ -164,11 +164,24 @@ class Wikipedia:
 
 
     # Do something more interesting!!
-    def find_something_more_interesting(self):
-        #------------------------#
-        # Write your code here!  #
-        #------------------------#
-        pass
+    def find_most_longest_continuous_titles(self):
+        longest = {}
+        for title in self.titles.values():
+            max_count = 1
+            count = 1
+            for i in range(1, len(title)):
+                if title[i] == title[i - 1]:
+                    count += 1
+                else:
+                    if count >= max_count:
+                        max_count = count
+                    count = 1
+            longest[title] = max_count
+        longest = sorted(longest.items(), key=lambda x:x[1], reverse=True)
+        with open('longest_continuous_titles.txt', 'w') as f:
+            print(*longest, sep='\n',file=f)
+
+
 
 
 if __name__ == "__main__":
@@ -181,4 +194,5 @@ if __name__ == "__main__":
     #wikipedia.find_most_linked_pages()
     #wikipedia.find_shortest_path("A", "F")
     #wikipedia.find_shortest_path("渋谷", "パレートの法則")
-    wikipedia.find_most_popular_pages()
+    #wikipedia.find_most_popular_pages()
+    wikipedia.find_most_longest_continuous_titles()
