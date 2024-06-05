@@ -1,5 +1,6 @@
 import sys, time
 import collections
+# source venv/bin/activate
 import numpy as np
 import pandas as pd
 from pandas import Series
@@ -155,12 +156,17 @@ class Wikipedia:
 
         page_rank = sorted([(index_to_id[i], rank) for i, rank in enumerate(original_page_rank)], key=lambda x: x[1], reverse=True)
         
-        if len(page_rank) > 10:
-            for i in range(10):
-                print(f"ID: {page_rank[i][0]}, Title: {self.titles[page_rank[i][0]]}, PageRank: {page_rank[i][1]}")
-        else:
-            for pr in page_rank:
-                print(f"ID: {pr[0]}, Title: {self.titles[pr[0]]}, PageRank: {pr[1]}")
+        with open('most_popular_pages.txt', 'w') as f:
+            if len(page_rank) > 10:
+                for i in range(10):
+                    line = f"ID: {page_rank[i][0]}, Title: {self.titles[page_rank[i][0]]}, PageRank: {page_rank[i][1]}\n"
+                    f.write(line)
+                    print(line.strip())  
+            else:
+                for pr in page_rank:
+                    line = f"ID: {pr[0]}, Title: {self.titles[pr[0]]}, PageRank: {pr[1]}\n"
+                    f.write(line)
+                    print(line.strip())  
 
         # check if the sum of the page rank is the same
         total_rank = original_page_rank.sum()
