@@ -106,60 +106,65 @@ class Wikipedia:
         print("The shortest path from %s to %s is:" % (start, goal))
         print(path)
 
-
-    # Calculate the page ranks and print the most popular pages.
+    # Helped by CHATGPT
     def find_most_popular_pages(self):
         num_pages = len(self.titles)
-        original_page_rank = np.ones(num_pages)
-        new_initial_page_rank = np.zeros(num_pages)
-        #print("初始值",original_page_rank, new_initial_page_rank)
+        initial_value = 1.0
+        original_page_rank = np.full(num_pages, initial_value)
+        new_page_rank = np.zeros(num_pages)
 
-        # count the sum of the initial page rank
+        # calculate the sum of page rank
         initial_sum = original_page_rank.sum()
-        #print("Initial PageRank sum: %f" % (initial_sum))
+        print(f"Initial PageRank sum: {initial_sum}")
 
-        # add ID as the index of the numpy array
-        id_list = list(self.titles.keys())
-        original_page_rank = Series(original_page_rank, index = id_list)
-        #print("加入id后ori",original_page_rank)
-        new_initial_page_rank = Series(new_initial_page_rank, index = id_list)
-        #print("加入id后new",new_initial_page_rank)
+        # map page ids to indices
+        id_to_index = {id: index for index, id in enumerate(self.titles.keys())}
+        index_to_id = {index: id for id, index in id_to_index.items()}
 
-        # iterate until converged
+        # Create an array for the number of links each page has
+        links_count = np.zeros(num_pages)
+        for child_id, child_link in self.links.items():
+            child_index = id_to_index[child_id]
+            links_count[child_index] = len(child_link)
+
         converged = False
         iteration_count = 0
+        damping_factor = 0.85
 
         while not converged:
-            begin = time.time()
-            give_all = 0
-            new_page_rank = new_initial_page_rank.copy()
+            new_page_rank.fill(0)
+            give_all = 0.15 * original_page_rank.sum() / num_pages
 
             for child_id, child_link in self.links.items():
-                if len(child_link) == 0:
-                    give_all = original_page_rank[child_id] / num_pages
+                child_index = id_to_index[child_id]
+                rank = original_page_rank[child_index]
+                if links_count[child_index] == 0:
+                    give_neighbor = damping_factor * rank / num_pages
+                    new_page_rank += give_neighbor
                 else:
-                    give_neighbor = 0.85 * original_page_rank[child_id] / len(child_link)
-                    give_all += 0.15 * original_page_rank[child_id] / num_pages
-                for neighbor in child_link:
-                    new_page_rank[neighbor] += give_neighbor
-            give_all = 0.15 * original_page_rank.sum() / num_pages
+                    give_neighbor = damping_factor * rank / links_count[child_index]
+                    for neighbor in child_link:
+                        neighbor_index = id_to_index[neighbor]
+                        new_page_rank[neighbor_index] += give_neighbor
+
             new_page_rank += give_all
 
             converged = np.allclose(original_page_rank, new_page_rank, atol=0.05)
-            original_page_rank = new_page_rank
+            original_page_rank = new_page_rank.copy()
             iteration_count += 1
-            end = time.time()
-        print("%d %.6f" % (iteration_count, end - begin))
 
-        page_rank = np.sort(original_page_rank)[::-1]
+        page_rank = sorted([(index_to_id[i], rank) for i, rank in enumerate(original_page_rank)], key=lambda x: x[1], reverse=True)
         
         if len(page_rank) > 10:
-            page_rank = page_rank[:10]
-        print(page_rank)
+            for i in range(10):
+                print(f"ID: {page_rank[i][0]}, Title: {self.titles[page_rank[i][0]]}, PageRank: {page_rank[i][1]}")
+        else:
+            for pr in page_rank:
+                print(f"ID: {pr[0]}, Title: {self.titles[pr[0]]}, PageRank: {pr[1]}")
 
         # check if the sum of the page rank is the same
         total_rank = original_page_rank.sum()
-        print(f"Final PageRank sum: {total_rank}")
+        print(f"Final PageRank sum: {total_rank}, Iterations: {iteration_count}")
 
 
 
@@ -194,5 +199,5 @@ if __name__ == "__main__":
     #wikipedia.find_most_linked_pages()
     #wikipedia.find_shortest_path("A", "F")
     #wikipedia.find_shortest_path("渋谷", "パレートの法則")
-    #wikipedia.find_most_popular_pages()
-    wikipedia.find_most_longest_continuous_titles()
+    wikipedia.find_most_popular_pages()
+    #wikipedia.find_most_longest_continuous_titles()
